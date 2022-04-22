@@ -22,7 +22,6 @@
 
 * {
     box-sizing: border-box;
-    border: 1px solid gray;
 }
 
 body {
@@ -50,3 +49,40 @@ body {
     align-items: center;
     font-size: 32px;
 }
+
+.controls {
+    cursor: pointer;
+}
+
+.game-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 32px;
+}
+
+.space {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Setting up borders between game spaces */
+#space-7,
+#space-8,
+#space-9,
+#space-4,
+#space-5,
+#space-6 {
+    border-bottom: 2px solid var(--dark);
+}
+
+#space-7,
+#space-8,
+#space-4,
+#space-5,
+#space-1,
+#space-2 {
+    border-right: 2px solid var(--dark);
+}
+
