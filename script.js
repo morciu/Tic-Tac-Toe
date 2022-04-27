@@ -23,11 +23,16 @@ const GameBoard = (function() {
     // add events for player moves
     for (let i=0; i< elements.length; i++) {
         elements[i].addEventListener('click', () =>{
-            if (Game.currentGameMode !== null) {
-                gameBoard[i] = Game.currentGameMode.playerMove();
-                displayBoard()
-            }
+            _addEvent(i);
         })
+    }
+
+    function _addEvent(spaceIndex) {
+        // adds events to the game spaces
+        if (Game.currentGameMode !== null) {
+            gameBoard[spaceIndex] = Game.currentGameMode.playerMove(spaceIndex);
+            displayBoard();
+        }
     }
 
     let availableMoves = 9;
@@ -60,10 +65,13 @@ const GameBoard = (function() {
 })()
 
 const Player = function(mark) {
-   const makeMove = () => {
-       return mark;
-   }
-   return { makeMove };
+    let inputs = [];
+
+    const makeMove = (index) => {
+        inputs.push(index);
+        return mark;
+    }
+    return { makeMove, inputs };
 }
 
 const Singleplayer = (function() {
@@ -81,9 +89,9 @@ const Multiplayer = function() {
     let currentPlayer = p1;
 
     // Get player move
-    const playerMove = () => {
+    const playerMove = (index) => {
         // Store current player mark
-        let playerMark = currentPlayer.makeMove();
+        let playerMark = currentPlayer.makeMove(index);
 
         // switch players
         if (currentPlayer === p1) {
@@ -95,12 +103,36 @@ const Multiplayer = function() {
         return playerMark;
     }
  
-    return { playerMove }
+    return { playerMove, currentPlayer }
 }
 
 const Game = (function() {
     // Game modes
     let currentGameMode = null;
 
-    return { currentGameMode }
+    function checkIfWon(inputList) {
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ]
+        if (inputList.length > 3) {
+            return false;
+        } else {
+            for (let i=0; i<winConditions.length; i++) {
+                let found = 0
+                for (let j=0; j<3; j++) {
+                    if (inputList.includes(winConditions[i][j])) {
+                        found++;
+                    }
+                }
+                if (found === 3) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    return { currentGameMode, checkIfWon}
 })()
