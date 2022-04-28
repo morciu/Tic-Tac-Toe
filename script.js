@@ -30,7 +30,7 @@ const GameBoard = (function() {
     function _addEvent(spaceIndex) {
         // adds events to the game spaces
         if (Game.currentGameMode !== null) {
-            gameBoard[spaceIndex] = Game.currentGameMode.playerMove(spaceIndex);
+            Game.currentGameMode.playerMove(gameBoard, spaceIndex);
             displayBoard();
         }
     }
@@ -67,11 +67,37 @@ const GameBoard = (function() {
 const Player = function(mark) {
     let inputs = [];
 
-    const makeMove = (index) => {
-        inputs.push(index);
-        return mark;
+    const getMark = () => mark;
+
+    const makeMove = (board, index) => {
+        board[index] = mark;
+        inputs.push(index)
     }
-    return { makeMove, inputs };
+
+    checkIfWon = () => {
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ]
+        if (inputs.length > 3) {
+            return false;
+        } else {
+            for (let i=0; i<winConditions.length; i++) {
+                let found = 0
+                for (let j=0; j<3; j++) {
+                    if (inputs.includes(winConditions[i][j])) {
+                        found++;
+                    }
+                }
+                if (found === 3) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    return { getMark, makeMove, checkIfWon };
 }
 
 const Singleplayer = (function() {
@@ -89,9 +115,10 @@ const Multiplayer = function() {
     let currentPlayer = p1;
 
     // Get player move
-    const playerMove = (index) => {
+    const playerMove = (board, index) => {
         // Store current player mark
-        let playerMark = currentPlayer.makeMove(index);
+        currentPlayer.makeMove(board, index);
+        console.log(currentPlayer.checkIfWon());
 
         // switch players
         if (currentPlayer === p1) {
@@ -99,40 +126,16 @@ const Multiplayer = function() {
         } else if (currentPlayer === p2) {
             currentPlayer = p1;
         }
-
-        return playerMark;
     }
  
-    return { playerMove, currentPlayer }
+    return { playerMove }
 }
 
 const Game = (function() {
     // Game modes
     let currentGameMode = null;
 
-    function checkIfWon(inputList) {
-        const winConditions = [
-            [0, 1, 2], [3, 4, 5], [6, 7, 8],
-            [0, 3, 6], [1, 4, 7], [2, 5, 8],
-            [0, 4, 8], [2, 4, 6]
-        ]
-        if (inputList.length > 3) {
-            return false;
-        } else {
-            for (let i=0; i<winConditions.length; i++) {
-                let found = 0
-                for (let j=0; j<3; j++) {
-                    if (inputList.includes(winConditions[i][j])) {
-                        found++;
-                    }
-                }
-                if (found === 3) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
+    
 
-    return { currentGameMode, checkIfWon}
+    return { currentGameMode }
 })()
