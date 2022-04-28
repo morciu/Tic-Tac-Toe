@@ -119,7 +119,8 @@ const Multiplayer = function() {
         // Store current player mark
         currentPlayer.makeMove(board, index);
         if (currentPlayer.checkIfWon()) {
-            console.log(`${currentPlayer.getMark()} won!`)
+            console.log(`${currentPlayer.getMark()} won!`);
+            Game.currentGameMode = null;
         }
 
         // switch players
