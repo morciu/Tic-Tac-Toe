@@ -9,7 +9,23 @@ const DomElements = (function() {
         Game.currentGameMode = Multiplayer()
     })
     const spaces = document.querySelectorAll('.space');
-    return { startVsAI, startVsHuman, spaces }
+
+    // Current player indicators
+    const player1 = document.querySelector("#p1");
+    const player2 = document.querySelector("#p2");
+
+    // Color current player
+    const showCurrentPlayer = (player) => {
+        if (player === 1) {
+            player1.classList.add("currentPlayer");
+            player2.classList.remove("currentPlayer");
+        } else if (player === 2) {
+            player2.classList.add("currentPlayer");
+            player1.classList.remove("currentPlayer");
+        }
+    }
+
+    return { startVsAI, startVsHuman, spaces, showCurrentPlayer }
 })()
 
 const GameBoard = (function() {
@@ -113,6 +129,7 @@ const Multiplayer = function() {
     const p1 = Player('X');
     const p2 = Player('O');
     let currentPlayer = p1;
+    DomElements.showCurrentPlayer(1);
 
     // Get player move
     const playerMove = (board, index) => {
@@ -126,8 +143,10 @@ const Multiplayer = function() {
         // switch players
         if (currentPlayer === p1) {
             currentPlayer = p2;
+            DomElements.showCurrentPlayer(2);
         } else if (currentPlayer === p2) {
             currentPlayer = p1;
+            DomElements.showCurrentPlayer(1);
         }
     }
  
