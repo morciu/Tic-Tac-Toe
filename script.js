@@ -139,14 +139,15 @@ const Multiplayer = function() {
             console.log(`${currentPlayer.getMark()} won!`);
             Game.currentGameMode = null;
         }
-
-        // switch players
-        if (currentPlayer === p1) {
-            currentPlayer = p2;
-            DomElements.showCurrentPlayer(2);
-        } else if (currentPlayer === p2) {
-            currentPlayer = p1;
-            DomElements.showCurrentPlayer(1);
+        else {
+            // switch players
+            if (currentPlayer === p1) {
+                currentPlayer = p2;
+                DomElements.showCurrentPlayer(2);
+            } else if (currentPlayer === p2) {
+                currentPlayer = p1;
+                DomElements.showCurrentPlayer(1);
+            }
         }
     }
  
