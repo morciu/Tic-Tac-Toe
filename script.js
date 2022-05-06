@@ -25,6 +25,10 @@ const DomElements = (function() {
         }
     }
 
+    const showWinningMoves = () => {
+
+    }
+
     return { startVsAI, startVsHuman, spaces, showCurrentPlayer }
 })()
 
@@ -107,6 +111,9 @@ const Player = function(mark) {
                     }
                 }
                 if (found === 3) {
+                    for (move in winConditions[i]) {
+                        DomElements.spaces[winConditions[i][move]].classList.add("currentPlayer");
+                    }
                     return true;
                 }
             }
