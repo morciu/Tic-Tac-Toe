@@ -25,11 +25,11 @@ const DomElements = (function() {
         }
     }
 
-    const showWinningMoves = () => {
-
+    const showGridSpaces = () => {
+        return spaces;
     }
 
-    return { startVsAI, startVsHuman, spaces, showCurrentPlayer }
+    return { showGridSpaces, showCurrentPlayer }
 })()
 
 const GameBoard = (function() {
@@ -38,7 +38,7 @@ const GameBoard = (function() {
         null, null, null,
         null, null, null
     ]
-    const elements = DomElements.spaces;
+    const elements = DomElements.showGridSpaces();
 
     // add events for player moves
     for (let i=0; i< elements.length; i++) {
@@ -112,7 +112,7 @@ const Player = function(mark) {
                 }
                 if (found === 3) {
                     for (move in winConditions[i]) {
-                        DomElements.spaces[winConditions[i][move]].classList.add("currentPlayer");
+                        DomElements.showGridSpaces()[winConditions[i][move]].classList.add("currentPlayer");
                     }
                     return true;
                 }
