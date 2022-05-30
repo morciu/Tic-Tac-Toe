@@ -72,6 +72,10 @@ body {
     color: var(--blue);
 }
 
+.winningMove {
+    color: var(--blue);
+}
+
 .game-board {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

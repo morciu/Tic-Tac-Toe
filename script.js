@@ -74,6 +74,11 @@ const GameBoard = (function() {
             null, null, null
         ]
         availableMoves = 9;
+
+        // Reset colors from previous game's winning move
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].classList.remove("winningMove");
+        }
         displayBoard()
     }
 
@@ -81,7 +86,13 @@ const GameBoard = (function() {
         return mark;
     }
 
-    return {displayBoard, resetBoard, isPlayable, getMove};
+    const showWinningMove = (winningMove) => {
+        for (let i = 0; i < winningMove.length; i++) {
+            DomElements.showGridSpaces()[winningMove[i]].classList.add("winningMove");
+        }
+    }
+
+    return {displayBoard, resetBoard, isPlayable, getMove, showWinningMove };
 })()
 
 const Player = function(mark) {
@@ -111,9 +122,7 @@ const Player = function(mark) {
                     }
                 }
                 if (found === 3) {
-                    for (move in winConditions[i]) {
-                        DomElements.showGridSpaces()[winConditions[i][move]].classList.add("currentPlayer");
-                    }
+                    GameBoard.showWinningMove(winConditions[i]);
                     return true;
                 }
             }
@@ -165,7 +174,9 @@ const Game = (function() {
     // Game modes
     let currentGameMode = null;
 
-    
+    function getCurrentGameMode() {
+        return currentGameMode;
+    }
 
-    return { currentGameMode }
+    return { getCurrentGameMode }
 })()
