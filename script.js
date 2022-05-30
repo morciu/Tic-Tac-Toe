@@ -82,6 +82,10 @@ const GameBoard = (function() {
         displayBoard()
     }
 
+    function decreaseAvailableMoves() {
+        availableMoves--;
+    }
+
     const getMove = (mark) => {
         return mark;
     }
@@ -92,7 +96,7 @@ const GameBoard = (function() {
         }
     }
 
-    return {displayBoard, resetBoard, isPlayable, getMove, showWinningMove };
+    return {displayBoard, resetBoard, isPlayable, getMove, showWinningMove, decreaseAvailableMoves };
 })()
 
 const Player = function(mark) {
@@ -115,7 +119,7 @@ const Player = function(mark) {
             return false;
         } else {
             for (let i=0; i<winConditions.length; i++) {
-                let found = 0
+                let found = 0;
                 for (let j=0; j<3; j++) {
                     if (inputs.includes(winConditions[i][j])) {
                         found++;
@@ -149,21 +153,24 @@ const Multiplayer = function() {
 
     // Get player move
     const playerMove = (board, index) => {
-        // Store current player mark
-        currentPlayer.makeMove(board, index);
-        if (currentPlayer.checkIfWon()) {
-            console.log(`${currentPlayer.getMark()} won!`);
-            Game.currentGameMode = null;
-        }
-        else {
-            // switch players
-            if (currentPlayer === p1) {
-                currentPlayer = p2;
-                DomElements.showCurrentPlayer(2);
-            } else if (currentPlayer === p2) {
-                currentPlayer = p1;
-                DomElements.showCurrentPlayer(1);
+        if (!Game.checkGameOver()) {
+            // Store current player mark
+            currentPlayer.makeMove(board, index);
+            if (currentPlayer.checkIfWon()) {
+                console.log(`${currentPlayer.getMark()} won!`);
+                Game.currentGameMode = null;
             }
+            else {
+                // switch players
+                if (currentPlayer === p1) {
+                    currentPlayer = p2;
+                    DomElements.showCurrentPlayer(2);
+                } else if (currentPlayer === p2) {
+                    currentPlayer = p1;
+                    DomElements.showCurrentPlayer(1);
+                }
+            }
+            GameBoard.decreaseAvailableMoves();
         }
     }
  
@@ -174,9 +181,17 @@ const Game = (function() {
     // Game modes
     let currentGameMode = null;
 
+    function checkGameOver() {
+        if (!GameBoard.isPlayable()) {
+            currentGameMode = null;
+            return true;
+        }
+        return false;
+    }
+
     function getCurrentGameMode() {
         return currentGameMode;
     }
 
-    return { getCurrentGameMode }
+    return { getCurrentGameMode, checkGameOver }
 })()
