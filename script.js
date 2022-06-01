@@ -115,20 +115,16 @@ const Player = function(mark) {
             [0, 3, 6], [1, 4, 7], [2, 5, 8],
             [0, 4, 8], [2, 4, 6]
         ]
-        if (inputs.length > 3) {
-            return false;
-        } else {
-            for (let i=0; i<winConditions.length; i++) {
-                let found = 0;
-                for (let j=0; j<3; j++) {
-                    if (inputs.includes(winConditions[i][j])) {
-                        found++;
-                    }
+        for (let i=0; i<winConditions.length; i++) {
+            let found = 0;
+            for (let j=0; j<3; j++) {
+                if (inputs.includes(winConditions[i][j])) {
+                    found++;
                 }
-                if (found === 3) {
-                    GameBoard.showWinningMove(winConditions[i]);
-                    return true;
-                }
+            }
+            if (found === 3) {
+                GameBoard.showWinningMove(winConditions[i]);
+                return true;
             }
         }
         return false;
