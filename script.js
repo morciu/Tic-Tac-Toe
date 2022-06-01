@@ -1,12 +1,20 @@
 const DomElements = (function() {
+    // Reset game
+    const resetGame = document.querySelector('#reset');
+    resetGame.addEventListener('click', () => {
+        Game.resetGame();
+    });
+
+    // Start a game vs AI
     const startVsAI = document.querySelector('#vsAI');
     startVsAI.addEventListener('click', () => {
         Game.currentGameMode = Singleplayer();
     })
 
+    // Start a game vs another human
     const startVsHuman = document.querySelector('#vsHuman');
     startVsHuman.addEventListener('click', () => {
-        Game.currentGameMode = Multiplayer()
+        Game.setCurrentGameMode(Multiplayer()); 
     })
     const spaces = document.querySelectorAll('.space');
 
@@ -49,8 +57,8 @@ const GameBoard = (function() {
 
     function _addEvent(spaceIndex) {
         // adds events to the game spaces
-        if (Game.currentGameMode !== null) {
-            Game.currentGameMode.playerMove(gameBoard, spaceIndex);
+        if (Game.getCurrentGameMode() !== null) {
+            Game.getCurrentGameMode().playerMove(gameBoard, spaceIndex);
             displayBoard();
         }
     }
@@ -135,6 +143,12 @@ const Player = function(mark) {
 const Singleplayer = (function() {
     console.log('started single player');
     GameBoard.resetBoard();
+
+    function showMode() {
+        return "Single Player"
+    }
+
+    return { showMode }
 })
 
 const Multiplayer = function() {
@@ -169,8 +183,12 @@ const Multiplayer = function() {
             GameBoard.decreaseAvailableMoves();
         }
     }
+
+    function showMode() {
+        return "Multi Player";
+    }
  
-    return { playerMove }
+    return { playerMove, showMode }
 }
 
 const Game = (function() {
@@ -189,5 +207,15 @@ const Game = (function() {
         return currentGameMode;
     }
 
-    return { getCurrentGameMode, checkGameOver }
+    function setCurrentGameMode(mode) {
+        currentGameMode = mode;
+    }
+
+    function resetGame() {
+        if (currentGameMode === null) { }
+        else if (currentGameMode.showMode() === "Single Player") { currentGameMode = Singleplayer() }
+        else if (currentGameMode.showMode() === Multiplayer()) { currentGameMode = Multiplayer() }
+    }
+
+    return { getCurrentGameMode, setCurrentGameMode, checkGameOver, resetGame }
 })()
