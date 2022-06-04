@@ -55,7 +55,7 @@ body {
     grid-template-rows: repeat(4, 1fr);
 }
 
-#vsAI,
+#vsDumbAI,
 #vsHuman,
 #reset {
     cursor: pointer;

@@ -6,9 +6,9 @@ const DomElements = (function() {
     });
 
     // Start a game vs AI
-    const startVsAI = document.querySelector('#vsAI');
-    startVsAI.addEventListener('click', () => {
-        Game.currentGameMode = Singleplayer();
+    const startVsDumbAI = document.querySelector('#vsDumbAI');
+    startVsDumbAI.addEventListener('click', () => {
+        Game.setCurrentGameMode(DumbAI());
     })
 
     // Start a game vs another human
@@ -16,6 +16,8 @@ const DomElements = (function() {
     startVsHuman.addEventListener('click', () => {
         Game.setCurrentGameMode(Multiplayer()); 
     })
+
+    // Get all free spaces
     const spaces = document.querySelectorAll('.space');
 
     // Current player indicators
@@ -51,16 +53,8 @@ const GameBoard = (function() {
     // add events for player moves
     for (let i=0; i< elements.length; i++) {
         elements[i].addEventListener('click', () =>{
-            _addEvent(i);
+            Game.advanceGame(gameBoard, i);
         })
-    }
-
-    function _addEvent(spaceIndex) {
-        // adds events to the game spaces
-        if (Game.getCurrentGameMode() !== null) {
-            Game.getCurrentGameMode().playerMove(gameBoard, spaceIndex);
-            displayBoard();
-        }
     }
 
     let availableMoves = 9;
@@ -90,6 +84,16 @@ const GameBoard = (function() {
         displayBoard()
     }
 
+    function getFreeIndex() {
+        freeIndex = []
+        for (let i = 0; i < gameBoard.length; i++) {
+            if (gameBoard[i] === null) {
+                freeIndex.push(i);
+            }
+        }
+        return freeIndex;
+    }
+
     function decreaseAvailableMoves() {
         availableMoves--;
     }
@@ -104,7 +108,7 @@ const GameBoard = (function() {
         }
     }
 
-    return {displayBoard, resetBoard, isPlayable, getMove, showWinningMove, decreaseAvailableMoves };
+    return {displayBoard, resetBoard, isPlayable, getMove, getFreeIndex, showWinningMove, decreaseAvailableMoves };
 })()
 
 const Player = function(mark) {
@@ -117,7 +121,7 @@ const Player = function(mark) {
         inputs.push(index)
     }
 
-    checkIfWon = () => {
+    function checkIfWon()  {
         const winConditions = [
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
             [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -140,15 +144,89 @@ const Player = function(mark) {
     return { getMark, makeMove, checkIfWon };
 }
 
-const Singleplayer = (function() {
-    console.log('started single player');
-    GameBoard.resetBoard();
+const RandomAIPlayer = function(mark) {
+    inputs = [];
 
-    function showMode() {
-        return "Single Player"
+    // Inherit from Player object
+    const { getMark } = Player(mark);
+    function checkIfWon()  {
+        const winConditions = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ]
+        for (let i=0; i<winConditions.length; i++) {
+            let found = 0;
+            for (let j=0; j<3; j++) {
+                if (inputs.includes(winConditions[i][j])) {
+                    found++;
+                }
+            }
+            if (found === 3) {
+                GameBoard.showWinningMove(winConditions[i]);
+                return true;
+            }
+        }
+        return false;
     }
 
-    return { showMode }
+    // Make random moves
+    
+    const makeMove = (board, index) => {
+        let availableMoves = GameBoard.getFreeIndex();
+        let randomMove = Math.floor(Math.random() * availableMoves.length);
+        console.log("available moves: " + availableMoves);
+        console.log("random move: " + availableMoves[randomMove]);
+        board[availableMoves[randomMove]] = mark;
+        inputs.push(availableMoves[randomMove]);
+    }
+
+    return { getMark, makeMove, checkIfWon, inputs };
+}
+
+const DumbAI = (function() {
+    console.log('Dumb AI');
+    GameBoard.resetBoard();
+
+    const p1 = Player('X');
+    const p2 = RandomAIPlayer('O');
+    let currentPlayer = p1;
+    DomElements.showCurrentPlayer(1);
+
+    // Get player move
+    const playerMove = (board, index) => {
+        if (!Game.checkGameOver()) {
+            currentPlayer.makeMove(board, index);
+            GameBoard.displayBoard();
+            if (currentPlayer.checkIfWon()) {
+                console.log(`${currentPlayer.getMark()} won!`);
+                Game.currentGameMode = null;
+            } else {
+                currentPlayer = p2;
+                DomElements.showCurrentPlayer(2);
+                
+                setTimeout(() => {
+                    currentPlayer.makeMove(board, index);
+                    GameBoard.displayBoard();
+                    console.log(currentPlayer.checkIfWon());
+                    console.log(currentPlayer.inputs);
+                    if (currentPlayer.checkIfWon()) {
+                        console.log(`${currentPlayer.getMark()} won!`);
+                        Game.currentGameMode = null;
+                    } else {
+                        currentPlayer = p1;
+                        DomElements.showCurrentPlayer(1);
+                    }
+                }, 2000);}
+            GameBoard.decreaseAvailableMoves();
+        }
+    }
+
+    function showMode() {
+        return "Dumb AI"
+    }
+
+    return { showMode, playerMove }
 })
 
 const Multiplayer = function() {
@@ -168,7 +246,7 @@ const Multiplayer = function() {
             currentPlayer.makeMove(board, index);
             if (currentPlayer.checkIfWon()) {
                 console.log(`${currentPlayer.getMark()} won!`);
-                Game.currentGameMode = null;
+                Game.setCurrentGameMode(null);
             }
             else {
                 // switch players
@@ -211,11 +289,18 @@ const Game = (function() {
         currentGameMode = mode;
     }
 
+    function advanceGame(board, moveIndex) {
+        if (currentGameMode !== null && board[moveIndex] === null) {
+            currentGameMode.playerMove(board, moveIndex);
+            GameBoard.displayBoard();
+        }
+    }
+
     function resetGame() {
         if (currentGameMode === null) { }
-        else if (currentGameMode.showMode() === "Single Player") { currentGameMode = Singleplayer() }
+        else if (currentGameMode.showMode() === "Dumb AI") { currentGameMode = Singleplayer() }
         else if (currentGameMode.showMode() === Multiplayer()) { currentGameMode = Multiplayer() }
     }
 
-    return { getCurrentGameMode, setCurrentGameMode, checkGameOver, resetGame }
+    return { getCurrentGameMode, setCurrentGameMode, checkGameOver, resetGame, advanceGame }
 })()
