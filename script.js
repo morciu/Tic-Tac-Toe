@@ -117,6 +117,7 @@ const Player = function(mark) {
     const makeMove = (board, index) => {
         board[index] = mark;
         inputs.push(index)
+        GameBoard.decreaseAvailableMoves()
         GameBoard.displayBoard();
     }
 
@@ -161,6 +162,7 @@ const RandomAIPlayer = function(mark) {
         board[availableMoves[randomMove]] = mark;
         inputs.push(availableMoves[randomMove]);
         GameBoard.displayBoard();
+        GameBoard.decreaseAvailableMoves();
         console.log(mark + " inputs: " + inputs)
     }
 
@@ -239,7 +241,6 @@ const Multiplayer = function() {
                     DomElements.showCurrentPlayer(1);
                 }
             }
-            GameBoard.decreaseAvailableMoves();
         }
     }
 
@@ -279,7 +280,7 @@ const Game = (function() {
     function resetGame() {
         if (currentGameMode === null) { }
         else if (currentGameMode.showMode() === "Dumb AI") { currentGameMode = DumbAIGame() }
-        else if (currentGameMode.showMode() === Multiplayer()) { currentGameMode = Multiplayer() }
+        else if (currentGameMode.showMode() === "Multi Player") { currentGameMode = Multiplayer() }
     }
 
     return { getCurrentGameMode, setCurrentGameMode, checkGameOver, resetGame, advanceGame }
