@@ -57,7 +57,7 @@ body {
 
 #vsDumbAI,
 #vsHuman,
-#reset {
+#vsSmartAI {
     cursor: pointer;
     justify-self: center;
 }
