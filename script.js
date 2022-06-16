@@ -2,7 +2,8 @@ const DomElements = (function() {
     // Reset game
     const resetGame = document.querySelector('#vsSmartAI');
     resetGame.addEventListener('click', () => {
-        console.log("Smart AI")
+        Game.setCurrentGameMode('smart ai');
+        Game.startGame(Game.getCurrentGameMode());
     });
 
     // Start a game vs AI
@@ -72,7 +73,6 @@ const GameBoard = (function() {
     }
 
     const resetBoard = () => {
-        console.log("resetting")
         gameBoard = [
             null, null, null,
             null, null, null,
@@ -82,7 +82,6 @@ const GameBoard = (function() {
 
         // Reset colors from previous game's winning move
         for (let i = 0; i < elements.length; i++) {
-            console.log("removing colors")
             elements[i].classList.remove("winningMove");
         }
         displayBoard()
@@ -126,8 +125,6 @@ const Player = function(mark) {
     }
 
     const checkIfWon = (inputs) =>  {
-        console.log("CHECKING! " + mark)
-        console.log(inputs)
         const winConditions = [
             [0, 1, 2], [3, 4, 5], [6, 7, 8],
             [0, 3, 6], [1, 4, 7], [2, 5, 8],
@@ -141,17 +138,19 @@ const Player = function(mark) {
                 }
             }
             if (found === 3) {
-                GameBoard.showWinningMove(winConditions[i]);
-                inputs.splice(0, inputs.length);
-                return true;
+                return {won: true, move: winConditions[i]};
             }
         }
         return false;
     }
 
+    function clearInputs() {
+        inputs.splice(0, inputs.length)
+    }
+
     function showInputs() { return inputs }
 
-    return { makeMove, checkIfWon, showInputs };
+    return {clearInputs, makeMove, checkIfWon, showInputs };
 }
 
 const RandomAIPlayer = function(mark) {
@@ -160,7 +159,7 @@ const RandomAIPlayer = function(mark) {
     // Inherit from Player object
     const {checkIfWon} = Player(mark);
 
-    // Make random moves
+    // Make random move
     const makeMove = (board, index) => {
         let availableMoves = GameBoard.getFreeIndex();
         let randomMove = Math.floor(Math.random() * availableMoves.length);
@@ -168,12 +167,66 @@ const RandomAIPlayer = function(mark) {
         inputs.push(availableMoves[randomMove]);
         GameBoard.displayBoard();
         GameBoard.decreaseAvailableMoves();
-        console.log(mark + " inputs: " + inputs)
     }
 
     function showInputs() { return inputs }
 
-    return { makeMove, checkIfWon, showInputs };
+    function clearInputs() {
+        inputs.splice(0, inputs.length)
+    }
+
+    return { clearInputs, makeMove, checkIfWon, showInputs };
+}
+
+const SmartAIPlayer = function(mark) {
+    const inputs = [];
+
+    // Inherit from Player object
+    const { checkIfWon } = Player(mark);
+
+    function clearInputs() {
+        inputs.splice(0, inputs.length)
+    }
+
+    // Find best move
+    function findBestMove() {
+        let totalInputs = Game.totalInputs();
+        let availableMoves = GameBoard.getFreeIndex();
+        let bestValue = Infinity;
+        let bestMoveIndex;
+        for (let i = 0; i < availableMoves.length; i++) {
+            
+            // Push index to inputs
+            inputs.push(availableMoves[i]);
+            
+            let moveValue = Game.minimax(totalInputs, 0, true);
+
+            // Remove last input
+            inputs.pop();
+
+            // Get the lowest possible score
+            if (moveValue < bestValue) {
+                bestValue = moveValue;
+                bestMoveIndex = availableMoves[i];
+            }
+        }
+        return bestMoveIndex;
+    }
+
+    // Make move
+    const makeMove = (board, index) => {
+        let availableMoves = GameBoard.getFreeIndex();
+        let bestMove = findBestMove();
+
+        inputs.push(bestMove);
+        board[bestMove] = mark;
+        GameBoard.displayBoard();
+        GameBoard.decreaseAvailableMoves();
+    }
+
+    function showInputs() { return inputs }
+
+    return { clearInputs, makeMove, checkIfWon, showInputs };
 }
 
 const Game = (function() {
@@ -186,16 +239,17 @@ const Game = (function() {
 
     function startGame(mode) {
         GameBoard.resetBoard();
-        
         if (mode === "multiplayer") {
             player2 = Player('O');
-            currentPlayer = player1;
-            DomElements.showCurrentPlayer(1);
-        } else if (currentGameMode = 'dumb ai') {
+        } else if (currentGameMode === 'dumb ai') {
             player2 = RandomAIPlayer('O');
-            currentPlayer = player1;
-            DomElements.showCurrentPlayer(1);
+        } else if (currentGameMode === 'smart ai') {
+            player2 = SmartAIPlayer('O');
         }
+        player1.clearInputs();
+        player2.clearInputs();
+        currentPlayer = player1;
+        DomElements.showCurrentPlayer(1);
     }
 
     function gameTurn(board, index, mode) {
@@ -204,7 +258,8 @@ const Game = (function() {
                 // Store current player mark
                 currentPlayer.makeMove(board, index);
                 GameBoard.displayBoard();
-                if (currentPlayer.checkIfWon(currentPlayer.showInputs())) {
+                if (currentPlayer.checkIfWon(currentPlayer.showInputs()).won) {
+                    GameBoard.showWinningMove(currentPlayer.checkIfWon(currentPlayer.showInputs()).move);
                     setCurrentGameMode(null);
                 }
                 else {
@@ -212,7 +267,7 @@ const Game = (function() {
                     currentPlayer = switchPlayer()
                 }
             }
-        } else if (mode === 'dumb ai') {
+        } else if (mode === 'dumb ai' || mode === 'smart ai') {
             if (!checkGameOver()) {
                 // Human Turn
                 currentPlayer.makeMove(board, index);
@@ -226,6 +281,7 @@ const Game = (function() {
                     setTimeout(() => {
                         currentPlayer.makeMove(board, index);
                         if (currentPlayer.checkIfWon(currentPlayer.showInputs())) {
+                            GameBoard.showWinningMove(currentPlayer.checkIfWon(currentPlayer.showInputs()).move);
                             setCurrentGameMode(null);
                         } else {
                             currentPlayer = player1;
@@ -270,5 +326,74 @@ const Game = (function() {
         }
     }
 
-    return { startGame, getCurrentGameMode, setCurrentGameMode, advanceGame }
+    // Evaluate state of the board
+    function evalGame(totalInputs) {
+        if (player1.checkIfWon(totalInputs.p1)) {
+            return 1;
+        }
+        else if (player2.checkIfWon(totalInputs.p2)) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
+    }
+
+    // Minimax
+    function minimax(totalInputs, depth, max) {
+        let moves = Object.assign({}, totalInputs);
+        let score = evalGame(moves);
+        let totalPlayerMoves = totalInputs.p1.concat(totalInputs.p2);
+
+        // Return evaluated score for maximezer or minimizer or for a tied game
+        if (score === 1) {
+            return score;
+        }
+        if (score === -1) {
+            return score;
+        }
+        if (totalPlayerMoves.length >= 9) {
+            return 0;
+        }
+
+        // Maximizer's move
+        if (max === true) {
+            let bestScore = -1000;
+
+            // Make all possible moves
+            for (let i = 0; i < 9; i++) {
+                if (!totalPlayerMoves.includes(i)) {
+                    moves.p1.push(i);
+                    let moveScore = minimax(moves, depth + 1, false);
+                    bestScore = Math.max(bestScore, moveScore);
+                    moves.p1.pop();
+                }
+            }
+            return bestScore;
+        }
+        // Minimizer's move
+        else if (max === false) {
+            let bestScore = 1000;
+
+            // Make all possible moves
+            for (let i = 0; i < 9; i++) {
+                if (!totalPlayerMoves.includes(i)) {
+                    moves.p2.push(i);
+                    let moveScore = minimax(moves, depth + 1, true);
+                    bestScore = Math.min(bestScore, moveScore);
+                    moves.p2.pop();
+                }
+            }
+            return bestScore;
+        }
+    }
+
+    function totalInputs() {
+        return {
+            p1: player1.showInputs(),
+            p2: player2.showInputs()
+        }
+    }
+
+    return { evalGame, startGame, getCurrentGameMode, setCurrentGameMode, advanceGame, minimax, totalInputs }
 })()
