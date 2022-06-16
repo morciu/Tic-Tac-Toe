@@ -38,11 +38,16 @@ const DomElements = (function() {
         }
     }
 
+    const showTiedGame = () => {
+        player1.classList.add("currentPlayer");
+        player2.classList.add("currentPlayer");
+    }
+
     const showGridSpaces = () => {
         return spaces;
     }
 
-    return { showGridSpaces, showCurrentPlayer }
+    return { showGridSpaces, showCurrentPlayer, showTiedGame }
 })()
 
 const GameBoard = (function() {
@@ -262,6 +267,11 @@ const Game = (function() {
                     GameBoard.showWinningMove(currentPlayer.checkIfWon(currentPlayer.showInputs()).move);
                     setCurrentGameMode(null);
                 }
+                if (!GameBoard.isPlayable()) {
+                    console.log("TIE")
+                    DomElements.showTiedGame();
+                    currentGameMode = null;
+                }
                 else {
                     // switch players
                     currentPlayer = switchPlayer()
@@ -283,6 +293,11 @@ const Game = (function() {
                         if (currentPlayer.checkIfWon(currentPlayer.showInputs())) {
                             GameBoard.showWinningMove(currentPlayer.checkIfWon(currentPlayer.showInputs()).move);
                             setCurrentGameMode(null);
+                        }
+                        if (!GameBoard.isPlayable()) {
+                            console.log("TIE")
+                            DomElements.showTiedGame();
+                            currentGameMode = null;
                         } else {
                             currentPlayer = player1;
                             DomElements.showCurrentPlayer(1);
